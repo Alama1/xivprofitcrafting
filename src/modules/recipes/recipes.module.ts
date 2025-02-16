@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { RecipiesService } from './recipies.service';
-import { RecipiesController } from './recipies.controller';
+import { RecipiesService } from './recipes.service';
+import { RecipiesController } from './recipes.controller';
 import { XivapiModule } from '../xivapi/xivapi.module';
 import { PricesModule } from '../prices/prices.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recipe } from './recipe.entity';
-import { Ingridient } from './ingridient.entity';
+import { Ingredient } from './ingridient.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recipe, Ingridient]), XivapiModule, PricesModule],
+  imports: [TypeOrmModule.forFeature([Recipe, Ingredient]), XivapiModule, PricesModule],
   providers: [RecipiesService],
   controllers: [RecipiesController]
 })
-export class RecipiesModule {}
+export class RecipesModule {}

@@ -18,7 +18,6 @@ export class PricesService {
     async fetchPrices(id: number[]) {
         const url = `${this.baseUrl}/aggregated/Louisoix/${id.join(',')}`;
         const res = await firstValueFrom(this.httpService.get(url));
-        console.log(res.data);
         return ItemPriceMapper.getData(res.data);
     }
 
@@ -33,6 +32,7 @@ export class PricesService {
 
         for (let i = 0; i < items.data.length; i += batchSize) {
             const batch = items.data.slice(i, i + batchSize);
+            console.log(`Fetching batch ${batch}...`);
 
             try {
                 const prices = await this.fetchPrices(batch);
@@ -47,6 +47,6 @@ export class PricesService {
     }
 
     async getPricesByItemId(id: number) {
-        return await this.pricesRepository.findOne({ where: { itemId: id } });
+        return this.pricesRepository.findOne({ where: { itemId: id } });
     }
 }

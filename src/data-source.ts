@@ -6,10 +6,10 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 const dotenvPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: dotenvPath });
 const baseConfig = {
-  max: 10,
+  max: 20,
   min: 2,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 30000,
 };
 
 const extraOption = process.env.NODE_ENV === 'production'

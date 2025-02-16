@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Ingridient } from "../recipies/ingridient.entity";
+import { Ingredient } from "../recipes/ingridient.entity";
+import { Recipe } from "../recipes/recipe.entity";
 
 @Entity('prices')
 export class ItemPrice {
@@ -39,8 +40,11 @@ export class ItemPrice {
     @Column({ name: 'daily_sales_hq', default: 0 })
     dailySalesHQ: number;
 
-    @OneToMany(() => Ingridient, ingridient => ingridient.recipe)
-    item: Ingridient[];
+    @OneToMany(() => Recipe, recipe => recipe.finalItemPrice)
+    recipes: Recipe[];
+
+    @OneToMany(() => Ingredient, ingredient => ingredient.ingredientItemPrice)
+    ingredients: Ingredient[];
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt?: Date;

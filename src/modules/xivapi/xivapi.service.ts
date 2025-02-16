@@ -41,14 +41,15 @@ export class XivapiService {
         "ClassJob.Name",
     ]
 
-    async getRecipies(page: number = 1, entriesPerPage: number = 100) {
+    async getRecipes(page: number, entriesPerPage: number) {
         const response = await fetch(`https://xivapi.com/recipe/?columns=${this.columns.join(',')}&limit=${entriesPerPage}&page=${page}`,{
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + process.env.XIVAPI_KEY,
             },
         });
+
         const data = await response.json();
-        return RecipeMapper.toRecipies(data)
+        return RecipeMapper.toRecipes(data)
     }
 }
