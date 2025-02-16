@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Ingridient } from "./ingridient.entity";
+import { ItemPrice } from "../prices/itemPrice.entity";
 
 @Entity('recipe')
 export class Recipe {
@@ -11,6 +12,9 @@ export class Recipe {
 
     @Column({ name: 'class_job' })
     classJob: string;
+
+    @OneToMany(() => ItemPrice, price => price.item)
+    price: ItemPrice;
 
     @OneToMany(() => Ingridient, ingridient => ingridient.recipe, { onDelete: 'CASCADE' })
     recipeIngredients: Ingridient[];
