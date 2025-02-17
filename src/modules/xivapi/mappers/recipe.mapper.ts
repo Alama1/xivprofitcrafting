@@ -23,6 +23,7 @@ export class RecipeMapper {
                 name: recipe.ItemResult.Name,
                 classJob: recipe.ClassJob.Name,
                 itemId: recipe.ItemResult.ID,
+                amountResult: recipe.AmountResult,
                 recipeIngredients: ingredients,
             };
         }));

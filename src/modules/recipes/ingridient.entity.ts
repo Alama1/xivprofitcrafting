@@ -1,8 +1,9 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 import { Recipe } from "./recipe.entity";
 import { ItemPrice } from "../prices/itemPrice.entity";
 
 @Entity('ingredient')
+@Unique([ 'itemId', 'recipe' ])
 export class Ingredient {
     @PrimaryGeneratedColumn()
     id: number;
@@ -19,6 +20,9 @@ export class Ingredient {
     @ManyToOne(() => Recipe)
     @JoinColumn({ name: 'recipe_id' })
     recipe: Recipe;
+
+    @Column({ name: 'recipe_id' })
+    recipeId: number;
 
     @ManyToOne(() => ItemPrice)
     @JoinColumn({ name: 'ingredient_item_price_id' })

@@ -1,8 +1,12 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 import { Ingredient } from "./ingridient.entity";
 import { ItemPrice } from "../prices/itemPrice.entity";
 
 @Entity('recipe')
+@Unique([
+    'itemId',
+    'classJob'
+])
 export class Recipe {
     @PrimaryGeneratedColumn()
     id: number;
@@ -15,6 +19,9 @@ export class Recipe {
 
     @Column({ name: 'class_job' })
     classJob: string;
+
+    @Column({ name: 'amout_result', default: 1 })
+    amountResult: number;
 
     @ManyToOne(() => ItemPrice, itemPrice => itemPrice.recipes, { nullable: true })
     finalItemPrice: ItemPrice;

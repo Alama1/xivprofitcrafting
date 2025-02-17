@@ -8,6 +8,7 @@ export class XivapiService {
         "ID",
         "ItemResult.ID", 
         "ItemResult.Name", 
+        "AmountResult",
         "ItemIngredient0.ID",  
         "ItemIngredient0.Name",
         "ItemIngredient1.ID", 

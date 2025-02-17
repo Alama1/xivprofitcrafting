@@ -7,6 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RecipeMapper } from './mappers/recipe.mapper';
 import { ItemPrice } from '../prices/itemPrice.entity';
+import { ProfitMapper } from './mappers/profit.mapper';
 
 @Injectable()
 export class RecipiesService {
@@ -20,25 +21,26 @@ export class RecipiesService {
         private readonly ingredientRepository: Repository<Ingredient>,
     ) {}
 
-    async updateAllRecipies() {
-        for (let page = 1; page <= 13; page++) {
-            const recipes = await this.xivapiService.getRecipes(page, 1000);
-        }
+    async updateAllRecipies(page) {
+        const recipes = await this.xivapiService.getRecipes(page, 3000);
     }
 
     async updateRecipies(page: number = 1, entriesPerPage: number = 100) {
+        console.log(`Updating recipes - Page: ${page}, Entries Per Page: ${entriesPerPage}`);
+
         const recipes = await this.xivapiService.getRecipes(page, entriesPerPage);
         const itemIds = new Set<number>();
-    
+
         for (const recipe of recipes) {
             itemIds.add(recipe.itemId);
             recipe.recipeIngredients.forEach(ingredient => itemIds.add(ingredient.itemId));
         }
-    
+
+        console.log('Fetching prices...');
         const priceResults = await Promise.all(
             Array.from(itemIds).map(id => this.pricesService.getPricesByItemId(id))
         );
-    
+
         const pricesMap = new Map<number, ItemPrice>();
         priceResults.forEach(itemPrice => {
             if (itemPrice) {
@@ -48,66 +50,56 @@ export class RecipiesService {
 
         console.log('Prices fetched:', pricesMap.size);
 
-        const filteredRecipies = recipes.filter(recipe => {
-            return pricesMap.get(recipe.itemId)
-        });
-
+        const filteredRecipies = recipes.filter(recipe => pricesMap.has(recipe.itemId));
         console.log('Filtered recipes:', filteredRecipies.length);
-    
-        const recipesToSave = [];
-        const ingredientsToSave = [];
-    
-        for (const recipe of filteredRecipies) {
-            console.log('Processing recipe:', recipe.itemId);
-            const itemPrice = pricesMap.get(recipe.itemId);
-            if (!itemPrice) continue;
-    
-            const newRecipe = this.recipeRepository.create({
-                ...recipe,
-                finalItemPrice: itemPrice,
-            });
-            recipesToSave.push(newRecipe);
-    
-            for (const ingredient of recipe.recipeIngredients) {
-                const ingredientPrice = pricesMap.get(ingredient.itemId);
-                if (ingredientPrice) {
-                    const newIngredient = this.ingredientRepository.create({
-                        ...ingredient,
-                        recipe: newRecipe,
-                        ingredientItemPrice: ingredientPrice,
-                    });
-                    ingredientsToSave.push(newIngredient);
+
+        // No need to create separate recipesToSave and ingredientsToSave arrays anymore
+        // We'll process and save everything within the transaction
+
+        await this.dataSource.transaction(async transactionalEntityManager => {
+            console.log('Upserting recipes and ingredients...');
+
+            for (const recipe of filteredRecipies) {
+                console.log('Processing recipe:', recipe.itemId);
+                const itemPrice = pricesMap.get(recipe.itemId);
+                if (!itemPrice) continue;
+
+                // 1. Create the Recipe entity (NO id assigned yet)
+                const newRecipe = this.recipeRepository.create({
+                    ...recipe,
+                    finalItemPrice: itemPrice,
+                });
+
+                // 2. Save the Recipe entity *and get the returned object* (NOW with id)
+                const savedRecipe = await transactionalEntityManager
+                    .getRepository(Recipe)
+                    .save(newRecipe); // Save INDIVIDUALLY
+
+                // 3. Create and save related Ingredient entities
+                for (const ingredient of recipe.recipeIngredients) {
+                    const ingredientPrice = pricesMap.get(ingredient.itemId);
+                    if (ingredientPrice) {
+                        const newIngredient = this.ingredientRepository.create({
+                            ...ingredient,
+                            recipe: savedRecipe, // Use the savedRecipe with the ID
+                            ingredientItemPrice: ingredientPrice,
+                        });
+
+                        // 4. Save the Ingredient entity
+                        await transactionalEntityManager
+                            .getRepository(Ingredient)
+                            .save(newIngredient); // Save INDIVIDUALLY
+                    }
                 }
             }
-        }
-    
-        await this.dataSource.transaction(async transactionalEntityManager => {
-            console.log('Saving recipes and ingredients...');
-            if (recipesToSave.length > 0) {
-                console.log('Saving recipes...', recipesToSave.length);
-                const savedRecipes = await transactionalEntityManager.save(Recipe, recipesToSave);
-                console.log('Recipes saved:', savedRecipes.length);
-                const recipeMap = new Map<number, Recipe>();
-                savedRecipes.forEach(recipe => recipeMap.set(recipe.itemId, recipe));
-        
-                ingredientsToSave.forEach(ingredient => {
-                    const savedRecipe = recipeMap.get(ingredient.recipe.itemId);
-                    if (savedRecipe) {
-                        ingredient.recipe = savedRecipe;
-                    }
-                });
-            }
-        
-            if (ingredientsToSave.length > 0) {
-                console.log('Saving ingredients...');
-                await transactionalEntityManager.save(Ingredient, ingredientsToSave);
-                console.log('Ingredients saved.');
-            }
+
+            console.log('Database update complete.');
         });
-        
-    
-        return recipes;
+
+        return recipes; // Or return something more meaningful, like the saved recipes
     }
+
+    
 
     async getRecipeWithDetails(recipeId: number) {
         const response = await this.recipeRepository.findOne({
@@ -152,6 +144,19 @@ export class RecipiesService {
             .leftJoinAndSelect('recipe.finalItemPrice', 'finalItemPrice')
             .getMany();
         return response.map((recipe) => RecipeMapper.toRecipes(recipe));
+    }
+
+    async getProfits(minSalesADay: number, limit: number, sort: string) {
+        const response = await this.recipeRepository
+            .createQueryBuilder('recipe')
+            .leftJoinAndSelect('recipe.recipeIngredients', 'ingredient')
+            .leftJoinAndSelect('ingredient.ingredientItemPrice', 'ingredientItemPrice')
+            .leftJoinAndSelect('recipe.finalItemPrice', 'finalItemPrice')
+            .getMany();
+        const profits = response.map((recipe) => ProfitMapper.toRecipes(recipe));
+        const filtered = profits.filter((profit) => profit.sales >= minSalesADay);
+        const sortedProfits = filtered.sort((a, b) => b[sort] - a[sort]);
+        return sortedProfits.slice(0, limit);
     }
 }
  

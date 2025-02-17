@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { RecipiesService } from './recipes.service';
 import { PricesService } from '../prices/prices.service';
+import e from 'express';
 
 @Controller('recipes')
 export class RecipiesController {
@@ -24,4 +25,25 @@ export class RecipiesController {
     async getAllRecipies() {
         return this.recipiesService.getAllRecipies()
     }
+
+    @Get('/profit')
+    async getProfit(@Query('sales') sales: number, @Query('limit') limit: number, @Query('sort') sort: Sort) {
+        return this.recipiesService.getProfits(sales, limit, sort)
+    }
+
+    @Get('/update')
+    async updateRecipies(@Query('page') page: number, @Query('entries') entries: number) {
+        return this.recipiesService.updateRecipies(page, entries)
+    }
+
+    @Get('/update/prices')
+    async updatePrices() {
+        return this.pricesService.updateDatabasePrices()
+    }
+}
+
+enum Sort {
+    chaos = 'profitChaos',
+    listed = 'profitLoui',
+    loui = 'profitListed'
 }
