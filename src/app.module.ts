@@ -4,13 +4,13 @@ import { AppService } from './app.service';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { XivapiModule } from './modules/xivapi/xivapi.module';
 import { PricesModule } from './modules/prices/prices.module';
-import { dataSourceOptions } from './data-source'
+import { dataSourceOptions } from './data-source';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-    RecipesModule, 
-    XivapiModule, 
+    RecipesModule,
+    XivapiModule,
     PricesModule,
     TypeOrmModule.forRoot(dataSourceOptions),
   ],

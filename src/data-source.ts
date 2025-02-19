@@ -12,15 +12,16 @@ const baseConfig = {
   connectionTimeoutMillis: 30000,
 };
 
-const extraOption = process.env.NODE_ENV === 'production'
-  ? {
-    ...baseConfig,
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  }
-  : baseConfig;
+const extraOption =
+  process.env.NODE_ENV === 'production'
+    ? {
+        ...baseConfig,
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : baseConfig;
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

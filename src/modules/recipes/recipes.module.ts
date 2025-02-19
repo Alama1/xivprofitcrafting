@@ -8,8 +8,12 @@ import { Recipe } from './recipe.entity';
 import { Ingredient } from './ingridient.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recipe, Ingredient]), XivapiModule, PricesModule],
+  imports: [
+    TypeOrmModule.forFeature([Recipe, Ingredient]),
+    XivapiModule,
+    PricesModule,
+  ],
   providers: [RecipiesService],
-  controllers: [RecipiesController]
+  controllers: [RecipiesController],
 })
 export class RecipesModule {}
